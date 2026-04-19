@@ -42,6 +42,7 @@ sys.path.insert(0, ".")
 from share import *
 
 import glob
+import re
 import torch
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
@@ -69,6 +70,41 @@ def find_source_checkpoint(source_preset: str) -> str:
             f"  Has '{source_preset}' been trained? Run it first."
         )
     return candidates[-1]
+
+
+def parse_env_bool(name: str, default: bool = True) -> bool:
+    """Parse bool-like env vars (1/0, true/false, yes/no, on/off)."""
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    value = value.strip().lower()
+    if value in {"1", "true", "yes", "on", "y"}:
+        return True
+    if value in {"0", "false", "no", "off", "n"}:
+        return False
+    return default
+
+
+def parse_env_int(name: str, default: int) -> int:
+    """Parse integer env var, fallback to default when unset/empty."""
+    value = os.environ.get(name)
+    if value is None or value.strip() == "":
+        return default
+    return int(value)
+
+
+def parse_env_float(name: str, default: float) -> float:
+    """Parse float env var, fallback to default when unset/empty."""
+    value = os.environ.get(name)
+    if value is None or value.strip() == "":
+        return default
+    return float(value)
+
+
+def sanitize_run_tag(tag: str) -> str:
+    """Allow only [A-Za-z0-9_.-] in run tag; replace others with '-' ."""
+    cleaned = re.sub(r"[^A-Za-z0-9_.-]+", "-", tag).strip("-._")
+    return cleaned or "run"
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -236,7 +272,34 @@ if __name__ == "__main__":
 
     PRESET_NAME = os.environ.get("PRESET", "scratch")
     assert PRESET_NAME in PRESETS, f"Unknown PRESET={PRESET_NAME!r}. Options: {list(PRESETS.keys())}"
-    preset = PRESETS[PRESET_NAME]
+    RUN_TAG_RAW = os.environ.get("RUN_TAG", "").strip()
+    RUN_TAG = sanitize_run_tag(RUN_TAG_RAW) if RUN_TAG_RAW else ""
+    DATA_ROOT_OVERRIDE = os.environ.get("DATA_ROOT", "").strip()
+    AUTO_RESUME = parse_env_bool("AUTO_RESUME", default=True)
+
+    # Copy to avoid mutating global preset defaults during sweep overrides.
+    preset = dict(PRESETS[PRESET_NAME])
+
+    if "LR_OVERRIDE" in os.environ:
+        preset["lr"] = parse_env_float("LR_OVERRIDE", preset["lr"])
+    if "IMAGE_LOSS_OVERRIDE" in os.environ:
+        preset["image_loss"] = parse_env_float("IMAGE_LOSS_OVERRIDE", preset.get("image_loss", 0.0))
+    if "DISTILL_LOSS_OVERRIDE" in os.environ:
+        preset["distill_loss"] = parse_env_float("DISTILL_LOSS_OVERRIDE", preset.get("distill_loss", 0.0))
+    if "DECODER_LR_SCALE_OVERRIDE" in os.environ:
+        preset["decoder_lr_scale"] = parse_env_float("DECODER_LR_SCALE_OVERRIDE", preset.get("decoder_lr_scale", 0.1))
+    if "CONTROL_WEIGHT_MASK_OVERRIDE" in os.environ:
+        preset["control_weight_mask"] = parse_env_float("CONTROL_WEIGHT_MASK_OVERRIDE", preset.get("control_weight_mask", 1.0))
+    if "CONTROL_WEIGHT_IMAGE_OVERRIDE" in os.environ:
+        preset["control_weight_image"] = parse_env_float("CONTROL_WEIGHT_IMAGE_OVERRIDE", preset.get("control_weight_image", 0.25))
+    if "UNLOCK_LAST_N_OVERRIDE" in os.environ:
+        preset["unlock_last_n"] = parse_env_int("UNLOCK_LAST_N_OVERRIDE", preset.get("unlock_last_n", 0))
+    if "SD_LOCKED_OVERRIDE" in os.environ:
+        preset["sd_locked"] = parse_env_bool("SD_LOCKED_OVERRIDE", preset["sd_locked"])
+    if "TRAIN_MASK_CN_OVERRIDE" in os.environ:
+        preset["train_mask_cn"] = parse_env_bool("TRAIN_MASK_CN_OVERRIDE", preset.get("train_mask_cn", True))
+    if "TRAIN_IMAGE_CN_OVERRIDE" in os.environ:
+        preset["train_image_cn"] = parse_env_bool("TRAIN_IMAGE_CN_OVERRIDE", preset.get("train_image_cn", True))
 
     # Resolve $source_preset markers → actual checkpoint paths
     CKPT_PATH = preset["ckpt_path"]
@@ -249,7 +312,7 @@ if __name__ == "__main__":
     LR           = preset["lr"]
     MAX_STEPS    = int(os.environ.get('MAX_STEPS', str(preset["max_steps"])))
     RESUME_PATH  = os.environ.get("RESUME_PATH", None)
-    LOG_DIR      = f"runs/{PRESET_NAME}"
+    LOG_DIR      = f"runs/{PRESET_NAME}_{RUN_TAG}" if RUN_TAG else f"runs/{PRESET_NAME}"
     ONLY_MID_CTRL = False
 
     # New preset parameters for fine-grained control
@@ -271,7 +334,7 @@ if __name__ == "__main__":
     # Data config — set DATA_ROOT to your prepared liver data folder
     # Run: uv run python prepare_liver_data.py --src /path/to/raw --out ./data
     # ──────────────────────────────────────────────────────────────────────────
-    DATA_ROOT    = './data/train/prompt.json'   # train split
+    DATA_ROOT    = DATA_ROOT_OVERRIDE if DATA_ROOT_OVERRIDE else './data/train/prompt.json'
 
     # Image logging frequency — scales with effective batch size so we log after
     # roughly the same number of *samples seen*, regardless of batch/accum config.
@@ -289,6 +352,9 @@ if __name__ == "__main__":
     print(f"  image_loss: {IMAGE_LOSS}  |  distill: {DISTILL_LOSS}")
     print(f"  ctrl_w_mask: {CONTROL_WEIGHT_MASK}  |  ctrl_w_image: {CONTROL_WEIGHT_IMAGE}")
     print(f"  log_dir:    {LOG_DIR}")
+    print(f"  run_tag:    {RUN_TAG if RUN_TAG else '(none)'}")
+    print(f"  data_root:  {DATA_ROOT}")
+    print(f"  auto_resume:{AUTO_RESUME}")
     print(f"{'='*60}")
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -422,7 +488,7 @@ if __name__ == "__main__":
     # ──────────────────────────────────────────────────────────────────────────
     # Auto-resume: find latest last.ckpt in this preset's log dir
     # ──────────────────────────────────────────────────────────────────────────
-    if RESUME_PATH is None:
+    if RESUME_PATH is None and AUTO_RESUME:
         candidates = sorted(glob.glob(f'{LOG_DIR}/*/checkpoints/last.ckpt'))
         # Legacy path: old runs wrote to lightning_logs/ — only check for scratch preset
         if not candidates and PRESET_NAME == "scratch":
@@ -430,6 +496,8 @@ if __name__ == "__main__":
         if candidates:
             RESUME_PATH = candidates[-1]
             print(f"\nAuto-resume: found {RESUME_PATH}")
+    elif RESUME_PATH is None and not AUTO_RESUME:
+        print("\nAuto-resume disabled (AUTO_RESUME=0)")
 
     # ──────────────────────────────────────────────────────────────────────────
     # Sanity check: run 2 steps + 1 image log to verify setup (skip on resume)
@@ -459,11 +527,24 @@ if __name__ == "__main__":
     # Trainer
     # ──────────────────────────────────────────────────────────────────────────
     csv_logger = pl.loggers.CSVLogger(save_dir=LOG_DIR, name="")
+    trainer_loggers = [csv_logger]
+
+    # Standard ML logging backend alongside CSV metrics.
+    try:
+        tb_logger = pl.loggers.TensorBoardLogger(
+            save_dir=LOG_DIR,
+            name="tb",
+            version=csv_logger.version,
+        )
+        trainer_loggers.append(tb_logger)
+        print(f"TensorBoard logs: {tb_logger.log_dir}")
+    except Exception as exc:
+        print(f"Warning: TensorBoard logger unavailable ({exc}). Continuing with CSV only.")
 
     trainer = pl.Trainer(
         accelerator=ACCELERATOR,
         devices=DEVICES,
-        logger=csv_logger,
+        logger=trainer_loggers,
         callbacks=[logger_cb, ckpt_cb],
         max_steps=MAX_STEPS,
         accumulate_grad_batches=GRAD_ACCUM,

@@ -21,3 +21,6 @@ huggingface-hub
 # Evaluation (optional — needed for evaluate_adc.py)
 torchmetrics[image]
 lpips
+
+# Logging
+tensorboard

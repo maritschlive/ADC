@@ -34,6 +34,13 @@ Even without using the plug-and-play `Online-Augmentation` module from [Siamese-
 This fork adds MPS (Apple Silicon) compatibility, liver surgery adaptation scripts,
 and a one-command setup for colleagues. All upstream functionality is preserved.
 
+### Project Handbook
+
+For a code-accurate operator guide (architecture, exact Slurm behavior, training presets,
+and experiment knobs), see:
+
+- `PROJECT_TRAINING_GUIDE.md`
+
 ### Quick Start
 ```bash
 # Clone with submodule
@@ -49,6 +56,14 @@ uv run python tutorial_inference_local.py
 # Train on your data
 uv run python prepare_liver_data.py --src /path/to/your/data --out ./data
 uv run python tutorial_train_single_gpu.py
+
+# Submit a multi-strategy Slurm sweep (quick|transfer|full)
+bash slurm/submit_experiments.sh --profile quick
+```
+
+TensorBoard logs are available for training runs:
+```bash
+tensorboard --logdir runs --port 6006
 ```
 
 ### File Map
