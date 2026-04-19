@@ -22,19 +22,48 @@ export PYTHONUNBUFFERED=1
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 cd "$HOME/ADC"
 
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+
+if [[ -n "${UV_BIN:-}" && -x "${UV_BIN}" ]]; then
+    UV_RUNNER="$UV_BIN"
+elif command -v uv &>/dev/null; then
+    UV_RUNNER="$(command -v uv)"
+elif [[ -x "$HOME/.local/bin/uv" ]]; then
+    UV_RUNNER="$HOME/.local/bin/uv"
+elif [[ -x "$HOME/.cargo/bin/uv" ]]; then
+    UV_RUNNER="$HOME/.cargo/bin/uv"
+else
+    echo "ERROR: uv not found in batch environment."
+    echo "Tried PATH, $HOME/.local/bin/uv and $HOME/.cargo/bin/uv."
+    echo "If setup was run under a different account, rerun: sbatch slurm/setup.sh"
+    exit 127
+fi
+
+if command -v python3 &>/dev/null; then
+    PY_BIN=python3
+else
+    PY_BIN=python
+fi
+
 START_TIME=$(date)
 EXIT_CODE=0
 
 # ── Preset selection ──
 export PRESET=${PRESET:-all}
 
-echo "Job $SLURM_JOB_ID on $(hostname) — $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)"
+if command -v nvidia-smi &>/dev/null; then
+    GPU_NAME="$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)"
+else
+    GPU_NAME="GPU unavailable"
+fi
+
+echo "Job $SLURM_JOB_ID on $(hostname) — ${GPU_NAME:-GPU unavailable}"
 echo "Preset: $PRESET  |  Starting at $START_TIME"
 
 if [[ "$PRESET" == "all" ]]; then
-    TRAINING_TARGET=workstation uv run python run_all.py || EXIT_CODE=$?
+    TRAINING_TARGET=workstation "$UV_RUNNER" run "$PY_BIN" run_all.py || EXIT_CODE=$?
 else
-    TRAINING_TARGET=workstation uv run python tutorial_train_single_gpu.py || EXIT_CODE=$?
+    TRAINING_TARGET=workstation "$UV_RUNNER" run "$PY_BIN" tutorial_train_single_gpu.py || EXIT_CODE=$?
 fi
 
 # ── Job summary (appears in .out file and SLURM email) ──

@@ -16,7 +16,30 @@ set -euo pipefail
 export PYTHONUNBUFFERED=1
 cd "$HOME/ADC"
 
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+
+if [[ -n "${UV_BIN:-}" && -x "${UV_BIN}" ]]; then
+	UV_RUNNER="$UV_BIN"
+elif command -v uv &>/dev/null; then
+	UV_RUNNER="$(command -v uv)"
+elif [[ -x "$HOME/.local/bin/uv" ]]; then
+	UV_RUNNER="$HOME/.local/bin/uv"
+elif [[ -x "$HOME/.cargo/bin/uv" ]]; then
+	UV_RUNNER="$HOME/.cargo/bin/uv"
+else
+	echo "ERROR: uv not found in batch environment."
+	echo "Tried PATH, $HOME/.local/bin/uv and $HOME/.cargo/bin/uv."
+	echo "If setup was run under a different account, rerun: sbatch slurm/setup.sh"
+	exit 127
+fi
+
+if command -v python3 &>/dev/null; then
+	PY_BIN=python3
+else
+	PY_BIN=python
+fi
+
 echo "Inference job $SLURM_JOB_ID — $(date)"
-uv run python tutorial_inference_local.py
+"$UV_RUNNER" run "$PY_BIN" tutorial_inference_local.py
 
 echo "Done at $(date). Results: generated_results/"
