@@ -1,0 +1,31 @@
+# Model weights (re-downloadable via download_weights.py)
+adc_weights/
+stable-diffusion-v1-5/
+
+# Generated output
+generated_results/
+image_log/
+lightning_logs/
+runs/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+
+# Test/synthetic data (regeneratable via create_sample_data.py / create_liver_sample.py)
+data/images/
+data/masks/
+
+# Converted training data (regeneratable via prepare_liver_data.py)
+data/train/
+data/val/
+data/test/
+data/prompt.json
+papers/adc_paper.txt
+
+# SLURM output logs
+adc_*.out
+adc_*.err
