@@ -9,10 +9,16 @@ import albumentations
 
 class MyDataset(Dataset):
     def __init__(self, root='./data/prompt.json'):
-        self.data = []
         with open(root, 'rt') as f:
-            for line in f:
-                self.data.append(json.loads(line))
+            raw = f.read().strip()
+
+        if not raw:
+            self.data = []
+        elif raw[0] == '[':
+            self.data = json.loads(raw)
+        else:
+            # Backward-compatible path for legacy JSONL prompt files.
+            self.data = [json.loads(line) for line in raw.splitlines() if line.strip()]
         self._transform = albumentations.Compose(
             [albumentations.Resize(height=384, width=384)]
         )

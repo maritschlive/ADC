@@ -1,0 +1,21 @@
+# Dataset path
+path: /home/anindya/Documents/Dresden Dataset
+
+# Paths to images for training, validation, and testing
+train: /home/anindya/Documents/Dresden Dataset/images/train
+val: /home/anindya/Documents/Dresden Dataset/images/val
+test: /home/anindya/Documents/Dresden Dataset/images/test
+
+nc: 11
+names:
+  0: abdominal_wall
+  1: colon
+  2: inferior_mesenteric_artery
+  3: intestinal_veins
+  4: liver
+  5: pancreas
+  6: small_intestine
+  7: spleen
+  8: stomach
+  9: ureter
+  10: vesicular_glands

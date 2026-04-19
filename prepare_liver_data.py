@@ -22,7 +22,7 @@ Output structure (under ADC data/):
         val/images/
         val/masks/
         val/prompt.json
-        prompt.json      ← combined JSONL used by MyDataset
+        prompt.json      ← combined JSON list used by MyDataset
 
 Usage:
     # Flat data (stems match between images/ and masks/):
@@ -197,7 +197,7 @@ def process_pair(img_path, mask_path, out_img_dir, out_mask_dir, size, idx):
 
 
 def write_split(pairs_list, split, out, args):
-    """Process pairs and write JSONL for one split.
+    """Process pairs and write JSON for one split.
 
     IMPORTANT: In ADC's MyDataset:
       - 'source' = mask (loaded as grayscale, binarized → hint/condition)
@@ -219,11 +219,10 @@ def write_split(pairs_list, split, out, args):
         if (idx + 1) % 100 == 0:
             print(f"  [{split}] Processed {idx+1}/{len(pairs_list)}")
 
-    jsonl_path = out / split / "prompt.json"
-    with open(jsonl_path, "w") as f:
-        for e in entries:
-            f.write(json.dumps(e) + "\n")
-    print(f"  [{split}] Wrote {len(entries)} entries → {jsonl_path}")
+    json_path = out / split / "prompt.json"
+    with open(json_path, "w") as f:
+        json.dump(entries, f)
+    print(f"  [{split}] Wrote {len(entries)} entries → {json_path}")
 
 
 def main():
@@ -319,14 +318,21 @@ def main():
 
     # ── Combined prompt.json at top level ─────────────────────────────────
     combined_path = out / "prompt.json"
+    combined_entries = []
+    for split_name in sorted((out).iterdir()):
+        if not split_name.is_dir():
+            continue
+        split_prompt = split_name / "prompt.json"
+        if split_prompt.exists():
+            with open(split_prompt) as sf:
+                split_entries = json.load(sf)
+                if isinstance(split_entries, list):
+                    combined_entries.extend(split_entries)
+                else:
+                    raise ValueError(f"Expected list in {split_prompt}, got {type(split_entries).__name__}")
+
     with open(combined_path, "w") as f:
-        for split_name in sorted((out).iterdir()):
-            if not split_name.is_dir():
-                continue
-            split_prompt = split_name / "prompt.json"
-            if split_prompt.exists():
-                with open(split_prompt) as sf:
-                    f.write(sf.read())
+        json.dump(combined_entries, f)
     print(f"\nCombined prompt.json: {combined_path}")
     print(f"Done! Data written to: {out.resolve()}")
     print(f"For training, set MyDataset root to 'data/train/prompt.json'")
