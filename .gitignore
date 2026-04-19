@@ -20,11 +20,11 @@ data/images/
 data/masks/
 
 # Converted training data (regeneratable via prepare_liver_data.py)
-data/train/
-data/val/
-data/test/
-data/prompt.json
-papers/adc_paper.txt
+# data/train/
+# data/val/
+# data/test/
+# data/prompt.json
+# papers/adc_paper.txt
 
 # SLURM output logs
 adc_*.out
