@@ -1,0 +1,2 @@
+epoch,step,train/loss_epoch,train/loss_simple_epoch,train/loss_vlb_epoch
+0,19,0.11212693154811859,0.11212693154811859,0.0025202720426023006

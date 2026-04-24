@@ -6,7 +6,8 @@ stable-diffusion-v1-5/
 generated_results/
 image_log/
 lightning_logs/
-runs/
+# runs/
+runs/**/checkpoints/
 
 # Python cache
 __pycache__/
