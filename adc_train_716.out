@@ -1,0 +1,15 @@
+Job 716 on t102-ws02.if.haw-landshut.de — NVIDIA GeForce RTX 4090
+Preset: scratch  |  Starting at Sun Apr 19 23:20:45 CEST 2026
+
+═══════════════════════════════════════════════════════════
+  JOB SUMMARY — 716
+═══════════════════════════════════════════════════════════
+  Node:     t102-ws02.if.haw-landshut.de
+  GPU:      NVIDIA GeForce RTX 4090, 43, 0 %, 336 MiB, 24564 MiB
+  Started:  Sun Apr 19 23:20:45 CEST 2026
+  Finished: Sun Apr 19 23:20:45 CEST 2026
+  Exit:     127
+
+  Disk usage:
+
+═══════════════════════════════════════════════════════════

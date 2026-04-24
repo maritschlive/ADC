@@ -1,0 +1,15 @@
+Job 717 on k017-ws03.if.haw-landshut.de — NVIDIA GeForce RTX 3090
+Preset: scratch_unlocked  |  Starting at Sun Apr 19 23:20:45 CEST 2026
+
+═══════════════════════════════════════════════════════════
+  JOB SUMMARY — 717
+═══════════════════════════════════════════════════════════
+  Node:     k017-ws03.if.haw-landshut.de
+  GPU:      NVIDIA GeForce RTX 3090, 33, 0 %, 26 MiB, 24576 MiB
+  Started:  Sun Apr 19 23:20:45 CEST 2026
+  Finished: Sun Apr 19 23:20:45 CEST 2026
+  Exit:     127
+
+  Disk usage:
+
+═══════════════════════════════════════════════════════════

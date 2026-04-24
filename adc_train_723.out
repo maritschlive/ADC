@@ -1,0 +1,15 @@
+Job 723 on k017-ws11.if.haw-landshut.de — NVIDIA GeForce RTX 3090
+Preset: polyp_stage2  |  Starting at Sun Apr 19 23:20:45 CEST 2026
+
+═══════════════════════════════════════════════════════════
+  JOB SUMMARY — 723
+═══════════════════════════════════════════════════════════
+  Node:     k017-ws11.if.haw-landshut.de
+  GPU:      NVIDIA GeForce RTX 3090, 29, 0 %, 72 MiB, 24576 MiB
+  Started:  Sun Apr 19 23:20:45 CEST 2026
+  Finished: Sun Apr 19 23:20:45 CEST 2026
+  Exit:     127
+
+  Disk usage:
+
+═══════════════════════════════════════════════════════════

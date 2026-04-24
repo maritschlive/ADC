@@ -27,5 +27,5 @@ data/masks/
 # papers/adc_paper.txt
 
 # SLURM output logs
-adc_*.out
-adc_*.err
+#adc_*.out
+#adc_*.err

@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/mnt/home/mtschi/ADC/tutorial_train_single_gpu.py", line 308, in <module>
+    CKPT_PATH = find_source_checkpoint(source_preset)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/home/mtschi/ADC/tutorial_train_single_gpu.py", line 67, in find_source_checkpoint
+    raise FileNotFoundError(
+FileNotFoundError: No checkpoint found for source preset 'polyp_unlocked'.
+  Searched: runs/polyp_unlocked/*/checkpoints/last.ckpt
+  Has 'polyp_unlocked' been trained? Run it first.

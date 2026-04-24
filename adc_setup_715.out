@@ -1,0 +1,67 @@
+uv not found. Attempting installation...
+installing to /mnt/home/mtschi/.local/bin
+  uv
+  uvx
+everything's installed!
+============================================================
+  ADC Project Setup
+  https://github.com/juliensauter/ADC
+============================================================
+
+============================================================
+  STEP 1: Python dependencies
+============================================================
+  Dependencies are managed via pyproject.toml.
+  When using `uv run python setup_adc.py`, they are installed automatically.
+  If running without uv, install manually: pip install -r requirements.txt
+
+============================================================
+  STEP 2: Downloading Stable Diffusion v1.5 (~7.7 GB)
+============================================================
+  Downloading to: /mnt/home/mtschi/ADC/stable-diffusion-v1-5/
+  ✓ SD v1.5 downloaded: /mnt/home/mtschi/ADC/stable-diffusion-v1-5/v1-5-pruned.ckpt
+
+============================================================
+  STEP 3: Downloading ADC pretrained weights (~9.6 GB)
+============================================================
+  Downloading to: /mnt/home/mtschi/ADC/adc_weights/
+  ✓ ADC weights downloaded: /mnt/home/mtschi/ADC/adc_weights/merged_pytorch_model.pth
+
+============================================================
+  STEP 4: Creating control_sd15.ckpt (training init)
+============================================================
+logging improved.
+Enabled sliced_attention.
+Loading SD v1.5 weights from ./stable-diffusion-v1-5/v1-5-pruned.ckpt ...
+Creating ADC model structure...
+No module 'xformers'. Proceeding without it.
+ControlLDM: Running in eps-prediction mode
+DiffusionWrapper has 1474.61 M params.
+making attention of type 'vanilla' with 512 in_channels
+Working with z of shape (1, 4, 32, 32) = 4096 dimensions.
+making attention of type 'vanilla' with 512 in_channels
+Loaded model config from [./models/cldm_v15.yaml]
+Mapping weights...
+Loading mapped weights into model...
+Saving to ./stable-diffusion-v1-5/control_sd15.ckpt ...
+Saved: ./stable-diffusion-v1-5/control_sd15.ckpt
+Done — control_sd15.ckpt ready for training.
+  ✓ Control checkpoint created: /mnt/home/mtschi/ADC/stable-diffusion-v1-5/control_sd15.ckpt
+
+============================================================
+  SETUP SUMMARY
+============================================================
+  ✓ SD v1.5 weights                v1-5-pruned.ckpt (7.2 GB)
+  ✓ ADC pretrained weights         merged_pytorch_model.pth (9.0 GB)
+  ✓ Control checkpoint             control_sd15.ckpt (9.0 GB)
+
+  ✓ torch                          v2.11.0+cu130
+  ✓ pytorch-lightning              v2.6.1
+  ✓ einops                         v0.8.2
+  ✓ transformers                   v5.5.4
+
+  All components ready! You can now run:
+    Inference:  uv run python tutorial_inference_local.py
+    Training:   uv run python tutorial_train_single_gpu.py
+
+Setup done. Next: sbatch slurm/train.sh

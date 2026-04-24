@@ -1,0 +1,21 @@
+Job 731 on t102-ws02.if.haw-landshut.de — NVIDIA GeForce RTX 4090
+Preset: polyp_unlocked  |  Starting at Mon Apr 20 00:31:29 CEST 2026
+logging improved.
+Enabled sliced_attention.
+
+═══════════════════════════════════════════════════════════
+  JOB SUMMARY — 731
+═══════════════════════════════════════════════════════════
+  Node:     t102-ws02.if.haw-landshut.de
+  GPU:      NVIDIA GeForce RTX 4090, 43, 0 %, 336 MiB, 24564 MiB
+  Started:  Mon Apr 20 00:31:29 CEST 2026
+  Finished: Mon Apr 20 00:31:36 CEST 2026
+  Exit:     1
+
+  Disk usage:
+    paper_faithful_scratch_20260419_233156_full_paper_scratch: 29G (2 ckpts, 210 images)
+    polyp_transfer_20260419_233156_full_transfer_base: 20M (0 ckpts, 78 images)
+    scratch: 12G (1 ckpts, 24 images)
+    scratch_20260419_233156_full_scratch_base: 24G (2 ckpts, 144 images)
+
+═══════════════════════════════════════════════════════════
