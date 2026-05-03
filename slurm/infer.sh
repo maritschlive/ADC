@@ -8,8 +8,8 @@
 #SBATCH --mem=32G
 #SBATCH --time=01:00:00
 #SBATCH --job-name=adc_infer
-#SBATCH --output=%x_%j.out
-#SBATCH --error=%x_%j.err
+#SBATCH --output=logs/%x_%j.out
+#SBATCH --error=logs/%x_%j.err
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=s-mtschi@haw-landshut.de
 set -euo pipefail

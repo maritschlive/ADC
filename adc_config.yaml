@@ -1,0 +1,196 @@
+# ADC Training Configuration
+# All changeable metrics and hyperparameters in one place
+
+# ═══════════════════════════════════════════════════════════════════════════
+# LOSS WEIGHTING
+# ═══════════════════════════════════════════════════════════════════════════
+loss:
+  weight_mask: 1.0                # Mask decoder denoising loss (Phase 1-2)
+  weight_image: 0.0               # Image decoder denoising loss (0=Phase1, 1.0+=Phase2)
+  weight_distill: 0.0             # Anatomy-aware distillation (mask→image)
+  simple_weight: 1.0              # Diffusion MSE scaling
+  elbo_weight: 0.1                # Variational Lower Bound regularizer
+  learn_logvar: true              # Enable learnable log-variance schedule
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CONTROL NETWORK MIXING
+# ═══════════════════════════════════════════════════════════════════════════
+control:
+  weight_mask: 1.0                # Mask ControlNet signal strength
+  weight_image: 0.25              # Image ControlNet signal strength (Phase 2)
+  scales: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]  # Per-block scales (13 blocks)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# OPTIMIZER & LEARNING RATES
+# ═══════════════════════════════════════════════════════════════════════════
+optimizer:
+  learning_rate: 1.0e-5           # Base learning rate for ControlNets
+  decoder_lr_scale: 0.1           # Decoder LR = lr × scale
+  weight_decay: 0.0               # L2 regularization (0 for decoder layers)
+  ema_decay: 0.9999               # Exponential Moving Average decay
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TRAINING MODES & FREEZING
+# ═══════════════════════════════════════════════════════════════════════════
+training:
+  train_mask_cn: true             # Train mask ControlNet (true Phase 1, false Phase 2)
+  train_image_cn: false           # Train image ControlNet (false Phase 1, true Phase 2)
+  sd_locked: true                 # Freeze/unfreeze Stable Diffusion decoder
+  unlock_last_n: 0                # Number of last decoder blocks to unlock (0=frozen)
+  max_steps: 20000                # Maximum training steps
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PRESETS (override all above settings)
+# ═══════════════════════════════════════════════════════════════════════════
+presets:
+  scratch:
+    description: "Phase 1: Train mask ControlNet from SD v1.5 baseline"
+    loss:
+      weight_mask: 1.0
+      weight_image: 0.0
+      weight_distill: 0.0
+    training:
+      train_mask_cn: true
+      train_image_cn: false
+      sd_locked: true
+      unlock_last_n: 0
+      max_steps: 20000
+    optimizer:
+      learning_rate: 1.0e-5
+
+  scratch_unlocked:
+    description: "Phase 1: Scratch + progressive unfreezing (last 3 blocks)"
+    loss:
+      weight_mask: 1.0
+      weight_image: 0.0
+      weight_distill: 0.0
+    training:
+      train_mask_cn: true
+      train_image_cn: false
+      sd_locked: false
+      unlock_last_n: 3
+      max_steps: 10000
+    optimizer:
+      learning_rate: 5.0e-6
+
+  polyp_transfer:
+    description: "Phase 1: Transfer from ADC polyp weights (medical domain)"
+    loss:
+      weight_mask: 1.0
+      weight_image: 0.0
+      weight_distill: 0.0
+    training:
+      train_mask_cn: true
+      train_image_cn: false
+      sd_locked: true
+      unlock_last_n: 0
+      max_steps: 20000
+    optimizer:
+      learning_rate: 1.0e-5
+
+  polyp_unlocked:
+    description: "Phase 1: Polyp transfer + progressive unfreezing"
+    loss:
+      weight_mask: 1.0
+      weight_image: 0.0
+      weight_distill: 0.0
+    training:
+      train_mask_cn: true
+      train_image_cn: false
+      sd_locked: false
+      unlock_last_n: 3
+      max_steps: 10000
+    optimizer:
+      learning_rate: 5.0e-6
+
+  scratch_stage2:
+    description: "Phase 2: Multi-path (image CN + distillation) from scratch path"
+    loss:
+      weight_mask: 1.0
+      weight_image: 1.0
+      weight_distill: 0.5
+    control:
+      weight_mask: 1.0
+      weight_image: 0.25
+    training:
+      train_mask_cn: false
+      train_image_cn: true
+      sd_locked: false
+      unlock_last_n: 3
+      max_steps: 10000
+    optimizer:
+      learning_rate: 5.0e-6
+
+  polyp_stage2:
+    description: "Phase 2: Full multi-path from polyp transfer checkpoint"
+    loss:
+      weight_mask: 1.0
+      weight_image: 1.0
+      weight_distill: 0.5
+    control:
+      weight_mask: 1.0
+      weight_image: 0.25
+    training:
+      train_mask_cn: false
+      train_image_cn: true
+      sd_locked: false
+      unlock_last_n: 3
+      max_steps: 10000
+    optimizer:
+      learning_rate: 5.0e-6
+
+# ═══════════════════════════════════════════════════════════════════════════
+# LOGGED METRICS (read-only reference)
+# ═══════════════════════════════════════════════════════════════════════════
+metrics:
+  training:
+    - train/loss                  # Main training loss
+    - train/loss_simple           # Diffusion MSE component
+    - train/loss_gamma            # Weighted loss (if learn_logvar=true)
+    - train/loss_vlb              # Variational Lower Bound
+    - logvar                       # Learned log-variance
+    - global_step                 # Step counter
+    - lr_abs                       # Current learning rate
+
+  validation:
+    - val/loss                    # Validation main loss
+    - val/loss_simple             # Validation MSE
+    - val/loss_gamma              # Validation gamma
+    - val/loss_vlb                # Validation VLB
+    - val/loss_simple_ema         # EMA-smoothed validation
+    - val/loss_gamma_ema          # EMA-smoothed gamma
+    - val/loss_vlb_ema            # EMA-smoothed VLB
+
+  evaluation:
+    fid: "Fréchet Inception Distance (lower=better, need ≥2 images)"
+    ssim: "Structural Similarity Index (higher=better, need 1:1 pairs)"
+    lpips: "Learned Perceptual Image Patch Similarity (lower=better, need 1:1 pairs)"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# RANGES & CONSTRAINTS
+# ═══════════════════════════════════════════════════════════════════════════
+constraints:
+  loss_weight_mask:
+    range: [0, 2.0]
+    recommended: 1.0
+  loss_weight_image:
+    range: [0, 2.0]
+    recommended: [0.0, 1.0]
+    note: "0 for Phase 1, 1.0+ for Phase 2"
+  loss_weight_distill:
+    range: [0, 2.0]
+    recommended: [0.0, 0.5]
+    note: "0 for Phase 1, 0.5 for Phase 2"
+  learning_rate:
+    range: [1e-7, 1e-3]
+    recommended: [1e-5, 5e-6]
+  decoder_lr_scale:
+    range: [0, 1.0]
+    recommended: 0.1
+  unlock_last_n:
+    range: [0, 36]
+    recommended: [0, 3]
+    note: "0=fully frozen, 3=last 3 blocks"
+  ema_decay:
+    range: [0.9, 0.9999]
+    recommended: 0.9999

@@ -1,9 +1,0 @@
-Traceback (most recent call last):
-  File "/mnt/home/mtschi/ADC/tutorial_train_single_gpu.py", line 308, in <module>
-    CKPT_PATH = find_source_checkpoint(source_preset)
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/mnt/home/mtschi/ADC/tutorial_train_single_gpu.py", line 67, in find_source_checkpoint
-    raise FileNotFoundError(
-FileNotFoundError: No checkpoint found for source preset 'polyp_transfer'.
-  Searched: runs/polyp_transfer/*/checkpoints/last.ckpt
-  Has 'polyp_transfer' been trained? Run it first.

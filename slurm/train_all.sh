@@ -14,6 +14,9 @@
 # need separate job tracking per preset.
 set -euo pipefail
 
+# SLURM writes --output/--error paths at job start. Ensure target dir exists.
+mkdir -p logs
+
 if [[ "${1:-}" == "--split" ]]; then
     shift
     # Split mode: separate jobs with dependencies
@@ -46,5 +49,5 @@ else
     JOB_ID=$(sbatch --parsable --export=ALL,PRESET=all slurm/train.sh)
     echo "  Submitted job $JOB_ID — runs all presets sequentially"
     echo "  Monitor with:  squeue -u \$USER"
-    echo "  Output:        adc_train_${JOB_ID}.out"
+    echo "  Output:        logs/adc_train_${JOB_ID}.out"
 fi
